@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ColtOS v1.0.0 — Muir Middle School (HVS) Web Desktop | ColtApps</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --muir-navy: #0f294a;
+      --muir-gold: #eab308;
+      --accent: #eab308;
+      --accent-fg: #081220;
+      --glass-alpha: 0.84;
+    }
+
+    /* Switchable Wallpapers */
+    body[data-wallpaper="muir"] {
+      background:
+        radial-gradient(circle at 18% 22%, rgba(234, 179, 8, 0.22), transparent 42%),
+        radial-gradient(circle at 82% 78%, rgba(56, 189, 248, 0.2), transparent 46%),
+        linear-gradient(135deg, #06101e 0%, #0f294a 52%, #08162b 100%);
+    }
+    body[data-wallpaper="cyber"] {
+      background:
+        radial-gradient(circle at 75% 20%, rgba(6, 182, 212, 0.24), transparent 45%),
+        radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.22), transparent 48%),
+        linear-gradient(135deg, #050811 0%, #0d1528 55%, #090d16 100%);
+    }
+    body[data-wallpaper="alpine"] {
+      background:
+        radial-gradient(circle at 25% 18%, rgba(251, 191, 36, 0.32), transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(14, 165, 233, 0.28), transparent 50%),
+        linear-gradient(145deg, #1e293b 0%, #334155 48%, #0f172a 100%);
+    }
+    body[data-wallpaper="aurora"] {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(16, 185, 129, 0.24), transparent 45%),
+        radial-gradient(circle at 75% 70%, rgba(59, 130, 246, 0.24), transparent 48%),
+        linear-gradient(135deg, #071318 0%, #0f242c 52%, #09111e 100%);
+    }
+
+    /* Dynamic Accent Utilities */
+    .os-accent-bg {
+      background-color: var(--accent) !important;
+      color: var(--accent-fg) !important;
+    }
+    .os-accent-text {
+      color: var(--accent) !important;
+    }
+    .os-accent-border {
+      border-color: var(--accent) !important;
+    }
+
+    /* Frosted Window & Dock Surfaces */
+    .os-window-glass {
+      background-color: rgba(13, 21, 36, var(--glass-alpha));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .os-dock-glass {
+      background-color: rgba(10, 17, 30, 0.86);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Window Resize Handle */
+    .win-resize-handle {
+      cursor: nwse-resize;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.28); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.48); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body data-wallpaper="muir" class="h-screen w-screen overflow-hidden flex flex-col text-slate-100 font-sans select-none">
+
+  <!-- TOP SUBTLE WATERMARK / INSTITUTION STATUS STRIP -->
+  <div class="pointer-events-none fixed top-3 right-4 z-0 text-right hidden sm:block opacity-75">
+    <div class="text-xs font-extrabold tracking-tight text-white/90">ColtOS <span class="os-accent-text font-mono">v1.0.0</span></div>
+    <div class="text-[11px] font-mono text-slate-300/80">Muir Middle School (HVS) &bull; Built by Henry Green</div>
+  </div>
+
+  <!-- MAIN DESKTOP CANVAS AREA -->
+  <main id="desktop-area" class="flex-1 relative overflow-hidden">
+    
+    <!-- Desktop Shortcuts Grid (Left Column) -->
+    <div id="desktop-icons" class="p-3 sm:p-4 grid grid-flow-col grid-rows-6 gap-2 w-fit z-10 relative">
+      <!-- Populated dynamically -->
+    </div>
+
+    <!-- Active Application Windows Container -->
+    <div id="windows-layer" class="absolute inset-0 pointer-events-none z-20">
+      <!-- Windows injected dynamically -->
+    </div>
+
+    <!-- START / APP LAUNCHER MENU POPOVER -->
+    <div id="start-menu" class="hidden fixed bottom-16 left-3 w-[calc(100vw-1.5rem)] max-w-md os-dock-glass border border-white/15 rounded-2xl shadow-2xl p-4 z-50 flex-col gap-3.5">
+      <!-- User & Institution Header -->
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl os-accent-bg flex items-center justify-center font-extrabold text-base shadow">
+            🐎
+          </div>
+          <div>
+            <div class="text-xs font-extrabold tracking-tight text-white">Muir Student &bull; HVS</div>
+            <div class="text-[11px] font-mono text-slate-400">ColtOS v1.0.0 &bull; ColtApps Suite</div>
+          </div>
+        </div>
+        <span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold">
+          ONLINE
+        </span>
+      </div>
+
+      <!-- Search Apps Input -->
+      <div class="relative">
+        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+        <input
+          id="start-search-input"
+          type="text"
+          placeholder="Search ColtApps, notes, or files..."
+          class="w-full pl-8 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-amber-400"
+        />
+      </div>
+
+      <!-- Pinned ColtApps Grid -->
+      <div>
+        <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-2">Pinned ColtApps</div>
+        <div id="start-apps-grid" class="grid grid-cols-3 gap-2">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Quick System Actions Footer -->
+      <div class="border-t border-white/10 pt-2.5 flex items-center justify-between text-[11px] font-mono">
+        <span class="text-slate-400">Author: <strong class="text-slate-200">Henry Green</strong></span>
+        <div class="flex items-center gap-1.5">
+          <button id="btn-start-settings" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-white font-semibold flex items-center gap-1">
+            <i data-lucide="settings" class="w-3 h-3"></i> Settings
+          </button>
+          <button id="btn-start-lock" class="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-semibold flex items-center gap-1">
+            <i data-lucide="lock" class="w-3 h-3"></i> Lock
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR & QUICK SYSTEM TRAY POPUP -->
+    <div id="tray-popup" class="hidden fixed bottom-16 right-3 w-72 os-dock-glass border border-white/15 rounded-2xl shadow-2xl p-4 z-50 space-y-3 font-mono text-xs">
+      <div class="flex items-center justify-between border-b border-white/10 pb-2">
+        <span class="font-bold os-accent-text">HVS Quick Control Center</span>
+        <span id="tray-date-str" class="text-[11px] text-slate-400">Nov 24, 2026</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="tray-btn-wifi" class="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-left">
+          <div class="text-emerald-400 font-bold flex items-center gap-1.5">
+            <i data-lucide="wifi" class="w-3.5 h-3.5"></i> HVS-Student
+          </div>
+          <div class="text-[10px] text-slate-300 mt-0.5">Connected &bull; 5GHz</div>
+        </button>
+
+        <button id="tray-btn-focus" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400 text-left">
+          <div id="tray-focus-label" class="font-bold text-slate-200 flex items-center gap-1.5">
+            <i data-lucide="bell" class="w-3.5 h-3.5 os-accent-text"></i> Focus: OFF
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Mute desktop toasts</div>
+        </button>
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="text-[10px] uppercase text-slate-400">Quick Wallpaper Switch</div>
+        <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+          <button data-wp="muir" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-left">Muir Navy &amp; Gold</button>
+          <button data-wp="cyber" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-left">Midnight Cyber</button>
+          <button data-wp="alpine" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-left">Alpine Dawn</button>
+          <button data-wp="aurora" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-left">Aurora Slate</button>
+        </div>
+      </div>
+
+      <div class="border-t border-white/10 pt-2 flex justify-between text-[10px] text-slate-400">
+        <span>Storage: <strong id="tray-ls-size" class="text-slate-200">0 KB</strong></span>
+        <span>Battery: <strong class="text-emerald-400">98%</strong></span>
+      </div>
+    </div>
+
+    <!-- LOCK SCREEN OVERLAY -->
+    <div id="lock-screen" class="hidden fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center">
+      <div class="w-16 h-16 rounded-2xl os-accent-bg flex items-center justify-center text-3xl shadow-2xl mb-4">
+        🐎
+      </div>
+      <div id="lock-clock" class="text-5xl font-extrabold tracking-tight font-mono mb-1">1:33 PM</div>
+      <div class="text-xs font-mono text-slate-400 mb-6">ColtOS v1.0.0 &bull; Muir Middle School (HVS)</div>
+      <button id="btn-unlock" class="px-6 py-2.5 rounded-xl os-accent-bg font-bold text-sm shadow-lg hover:scale-105 transition-transform">
+        Sign In as Muir Student
+      </button>
+    </div>
+
+    <!-- OS NOTIFICATION TOAST -->
+    <div id="os-toast" class="hidden fixed top-14 right-4 os-dock-glass border border-white/15 px-3.5 py-2 rounded-xl shadow-xl font-mono text-xs flex items-center gap-2 z-[90]">
+      <span class="w-2 h-2 rounded-full os-accent-bg"></span>
+      <span id="os-toast-text">Notification</span>
+    </div>
+  </main>
+
+  <!-- BOTTOM DOCK / TASKBAR -->
+  <footer id="os-taskbar" class="os-dock-glass border-t border-white/15 px-2.5 py-1.5 flex items-center justify-between gap-2 z-40 flex-shrink-0">
+    
+    <!-- Left: ColtOS Start Button & Pinned/Running App Icons -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <button id="btn-start-menu" title="ColtOS Launcher" class="flex items-center gap-2 px-3 py-1.5 rounded-xl os-accent-bg font-extrabold text-xs shadow-sm hover:opacity-95 transition flex-shrink-0">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        <span>ColtOS</span>
+      </button>
+
+      <div class="h-5 w-[1px] bg-white/15 mx-0.5 flex-shrink-0"></div>
+
+      <!-- Dock App Icons & Active Window Pills -->
+      <div id="dock-apps-list" class="flex items-center gap-1.5">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+
+    <!-- Right: System Tray & Live Clock -->
+    <div class="flex items-center gap-1.5 flex-shrink-0 font-mono text-xs">
+      <div class="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10 text-[11px] text-slate-300">
+        <span class="text-emerald-400 font-bold">RAM 1.8GB</span>
+        <span class="opacity-40">|</span>
+        <span>HVS-WiFi</span>
+      </div>
+
+      <button id="btn-tray-toggle" title="System Tray & Calendar" class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition">
+        <i data-lucide="wifi" class="w-3.5 h-3.5 text-emerald-400"></i>
+        <i id="tray-bell-icon" data-lucide="bell" class="w-3.5 h-3.5 os-accent-text"></i>
+        <span id="taskbar-clock" class="font-bold text-white">1:33 PM</span>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    /**
+     * ColtOS v1.0.0 — Web Desktop Operating System
+     * Built by Henry Green for Muir Middle School (HVS) as part of ColtApps
+     * Storage Namespace: coltos_v1_
+     */
+    (function () {
+      const PREFIX = 'coltos_v1_';
+
+      // --- Pre-Installed ColtApps Catalog ---
+      const APPS = {
+        browser: {
+          id: 'browser',
+          name: 'ColtBrowser',
+          subtitle: 'DuckDuckGo Privacy Web',
+          icon: 'compass',
+          color: 'bg-orange-500 text-white',
+          width: 760,
+          height: 500
+        },
+        emulate: {
+          id: 'emulate',
+          name: 'ColtEmulate',
+          subtitle: '.exe / .dmg Hypervisor',
+          icon: 'cpu',
+          color: 'bg-sky-500 text-slate-950',
+          width: 780,
+          height: 510
+        },
+        notes: {
+          id: 'notes',
+          name: 'ColtNotes',
+          subtitle: 'Markdown & Flashcards',
+          icon: 'notebook-pen',
+          color: 'bg-amber-400 text-slate-950',
+          width: 720,
+          height: 490
+        },
+        files: {
+          id: 'files',
+          name: 'ColtFiles',
+          subtitle: 'HVS Student File System',
+          icon: 'folder-open',
+          color: 'bg-emerald-500 text-slate-950',
+          width: 680,
+          height: 450
+        },
+        terminal: {
+          id: 'terminal',
+          name: 'ColtTerminal',
+          subtitle: 'Bash & System Shell',
+          icon: 'terminal',
+          color: 'bg-zinc-800 text-emerald-400 border border-emerald-500/40',
+          width: 640,
+          height: 420
+        },
+        settings: {
+          id: 'settings',
+          name: 'ColtSettings',
+          subtitle: 'Wallpaper & OS Config',
+          icon: 'settings',
+          color: 'bg-purple-500 text-white',
+          width: 640,
+          height: 470
+        }
+      };
+
+      const ACCENT_MAP = {
+        gold:    { hex: '#eab308', fg: '#081220' },
+        cyan:    { hex: '#06b6d4', fg: '#06101e' },
+        emerald: { hex: '#10b981', fg: '#05150e' },
+        orange:  { hex: '#f97316', fg: '#ffffff' },
+        purple:  { hex: '#a855f7', fg: '#ffffff' }
+      };
+
+      const EMULATE_SAMPLES = {
+        calcExe: { name: 'MuirCalc_Setup.exe', os: 'win', osName: 'ColtWin VM (Win11 x86_64)', magic: '4D 5A (MZ / Win32 PE)', size: '4.2 MB' },
+        studioDmg: { name: 'ColtStudio.dmg', os: 'mac', osName: 'ColtMac VM (macOS ARM64)', magic: '6B 6F 6C 79 (UDIF DMG)', size: '38.5 MB' },
+        ubuntuIso: { name: 'ubuntu-24.04.iso', os: 'linux', osName: 'ColtLinux VM (Ubuntu 24.04)', magic: '43 44 30 30 31 (ISO-9660)', size: '1.12 GB' },
+        snakeRom: { name: 'RetroSnake.rom', os: 'retro', osName: 'ColtRetro VM (FreeDOS/6502)', magic: '4E 45 53 1A (ROM Image)', size: '64 KB' }
+      };
+
+      // --- Default Virtual Filesystem ---
+      const DEFAULT_VFS = {
+        '/home/muir-student/Documents': [
+          { name: 'Science_Notes.md', type: 'note', size: '1.2 KB', content: '# Muir Middle School Science Notes\n- Photosynthesis converts light energy into chemical energy\n- Chloroplasts contain chlorophyll\n- Cellular respiration produces ATP energy' },
+          { name: 'History_Study_Guide.md', type: 'note', size: '0.9 KB', content: '# US History Unit 4\n- Constitution ratified in 1788\n- Bill of Rights consists of the first 10 amendments\n- Three branches: Legislative, Executive, Judicial' }
+        ],
+        '/home/muir-student/Downloads': [
+          { name: 'MuirCalc_Setup.exe', type: 'binary', sampleKey: 'calcExe', size: '4.2 MB' },
+          { name: 'ColtStudio.dmg', type: 'binary', sampleKey: 'studioDmg', size: '38.5 MB' },
+          { name: 'RetroSnake.rom', type: 'binary', sampleKey: 'snakeRom', size: '64 KB' }
+        ],
+        '/home/muir-student/Apps': [
+          { name: 'coltbrowser.html', type: 'app', appId: 'browser', size: '32 KB' },
+          { name: 'coltbrowser-lite.html', type: 'app', appId: 'browser', size: '18 KB' },
+          { name: 'coltbrowser-dev.html', type: 'app', appId: 'browser', size: '44 KB' },
+          { name: 'coltemulate.html', type: 'app', appId: 'emulate', size: '41 KB' }
+        ],
+        '/home/muir-student/Projects': [
+          { name: 'README.md', type: 'note', size: '1.1 KB', content: '# ColtApps Suite\nBuilt by Henry Green for Muir Middle School (HVS).\nIncludes ColtOS, ColtBrowser (Standard, LITE, DEV), and ColtEmulate.' }
+        ]
+      };
+
+      // --- Global OS State ---
+      const state = {
+        settings: {
+          wallpaper: 'muir',
+          accent: 'gold',
+          glassOpacity: 0.86,
+          topTaskbar: false,
+          focusMode: false
+        },
+        windows: [], // { id, appId, title, x, y, w, h, minimized, maximized, z }
+        topZ: 30,
+        activeWinId: null,
+        selectedDesktopIcon: null,
+        startOpen: false,
+        trayOpen: false,
+        // App-specific states
+        browserTabs: [
+          { id: 'bt1', title: 'ColtBrowser Home', query: '', url: 'colt://home', results: null }
+        ],
+        activeBrowserTab: 'bt1',
+        emulate: {
+          sample: { ...EMULATE_SAMPLES.calcExe },
+          os: 'win',
+          logs: ['[SYS] ColtEmulate Hypervisor ready inside ColtOS v1.0.0'],
+          executed: false
+        },
+        notes: {
+          title: 'Science_Notes.md',
+          body: DEFAULT_VFS['/home/muir-student/Documents'][0].content,
+          quizMode: false,
+          cardIndex: 0,
+          cardFlipped: false
+        },
+        vfs: JSON.parse(JSON.stringify(DEFAULT_VFS)),
+        currentDir: '/home/muir-student/Documents',
+        terminalHistory: [
+          'ColtOS v1.0.0 Shell — Built by Henry Green for Muir Middle School (HVS)',
+          'Type "help" for available commands or "neofetch" for system info.'
+        ],
+        terminalCwd: '/home/muir-student/Documents'
+      };
+
+      // --- Storage Persistence ---
+      function saveOS() {
+        try {
+          localStorage.setItem(PREFIX + 'state', JSON.stringify({
+            settings: state.settings,
+            notes: { title: state.notes.title, body: state.notes.body },
+            vfs: state.vfs
+          }));
+        } catch (e) {}
+      }
+
+      function loadOS() {
+        try {
+          const raw = localStorage.getItem(PREFIX + 'state');
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          if (data.settings) state.settings = { ...state.settings, ...data.settings };
+          if (data.notes) {
+            state.notes.title = data.notes.title || state.notes.title;
+            state.notes.body = data.notes.body ?? state.notes.body;
+          }
+          if (data.vfs) state.vfs = data.vfs;
+        } catch (e) {}
+      }
+
+      // --- Apply Appearance Settings ---
+      function applySettings() {
+        const s = state.settings;
+        document.body.setAttribute('data-wallpaper', s.wallpaper);
+
+        const acc = ACCENT_MAP[s.accent] || ACCENT_MAP.gold;
+        document.documentElement.style.setProperty('--accent', acc.hex);
+        document.documentElement.style.setProperty('--accent-fg', acc.fg);
+        document.documentElement.style.setProperty('--glass-alpha', String(s.glassOpacity));
+
+        // Taskbar position (Bottom vs Top)
+        const footer = document.getElementById('os-taskbar');
+        const main = document.getElementById('desktop-area');
+        if (s.topTaskbar) {
+          document.body.insertBefore(footer, main);
+          footer.classList.remove('border-t');
+          footer.classList.add('border-b');
+          document.getElementById('start-menu').style.bottom = 'auto';
+          document.getElementById('start-menu').style.top = '3.5rem';
+          document.getElementById('tray-popup').style.bottom = 'auto';
+          document.getElementById('tray-popup').style.top = '3.5rem';
+        } else {
+          document.body.appendChild(footer);
+          footer.classList.remove('border-b');
+          footer.classList.add('border-t');
+          document.getElementById('start-menu').style.top = 'auto';
+          document.getElementById('start-menu').style.bottom = '4rem';
+          document.getElementById('tray-popup').style.top = 'auto';
+          document.getElementById('tray-popup').style.bottom = '4rem';
+        }
+
+        // Focus Mode Indicator
+        document.getElementById('tray-focus-label').innerHTML = `
+          <i data-lucide="bell" class="w-3.5 h-3.5 os-accent-text"></i> Focus: ${s.focusMode ? 'ON' : 'OFF'}
+        `;
+      }
+
+      // --- OS Notification Toast ---
+      let toastTimer = null;
+      function notify(msg) {
+        if (state.settings.focusMode) return;
+        const el = document.getElementById('os-toast');
+        document.getElementById('os-toast-text').textContent = msg;
+        el.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
+      }
+
+      // --- Live Clock ---
+      function updateClocks() {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        document.getElementById('taskbar-clock').textContent = timeStr;
+        document.getElementById('lock-clock').textContent = timeStr;
+        document.getElementById('tray-date-str').textContent = dateStr;
+      }
+
+      // --- Window Management ---
+      function launchApp(appId) {
+        closePopovers();
+        const existing = state.windows.find(w => w.appId === appId);
+        if (existing) {
+          existing.minimized = false;
+          focusWindow(existing.id);
+          renderWindows();
+          renderDock();
+          return;
+        }
+
+        const spec = APPS[appId];
+        if (!spec) return;
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight - 52;
+        const w = Math.min(spec.width, vw - 24);
+        const h = Math.min(spec.height, vh - 24);
+        const offset = (state.windows.length % 5) * 26;
+
+        const win = {
+          id: 'win_' + appId,
+          appId,
+          title: spec.name,
+          x: Math.max(12, Math.round((vw - w) / 2) + offset),
+          y: Math.max(12, Math.round((vh - h) / 2) + offset),
+          w,
+          h,
+          minimized: false,
+          maximized: vw < 640, // Auto-maximize on narrow mobile viewports
+          z: ++state.topZ
+        };
+
+        state.windows.push(win);
+        state.activeWinId = win.id;
+        renderWindows();
+        renderDock();
+        lucide.createIcons();
+      }
+
+      function focusWindow(winId) {
+        const win = state.windows.find(w => w.id === winId);
+        if (!win) return;
+        win.z = ++state.topZ;
+        win.minimized = false;
+        state.activeWinId = winId;
+        document.querySelectorAll('.os-window-box').forEach(el => {
+          if (el.getAttribute('data-win-id') === winId) {
+            el.style.zIndex = win.z;
+          }
+        });
+        renderDock();
+      }
+
+      function closeWindow(winId) {
+        state.windows = state.windows.filter(w => w.id !== winId);
+        if (state.activeWinId === winId) {
+          const top = [...state.windows].sort((a, b) => b.z - a.z)[0];
+          state.activeWinId = top ? top.id : null;
+        }
+        renderWindows();
+        renderDock();
+      }
+
+      function toggleMinimize(winId) {
+        const win = state.windows.find(w => w.id === winId);
+        if (!win) return;
+        win.minimized = !win.minimized;
+        renderWindows();
+        renderDock();
+      }
+
+      function toggleMaximize(winId) {
+        const win = state.windows.find(w => w.id === winId);
+        if (!win) return;
+        win.maximized = !win.maximized;
+        focusWindow(winId);
+        renderWindows();
+      }
+
+      // --- Render Desktop Icons & Dock ---
+      function renderDesktopIcons() {
+        const container = document.getElementById('desktop-icons');
+        container.innerHTML = Object.values(APPS).map(app => {
+          const isSelected = state.selectedDesktopIcon === app.id;
+          return `
+            <button
+              data-desk-app="${app.id}"
+              class="w-24 p-2 rounded-2xl flex flex-col items-center text-center gap-1.5 transition ${
+                isSelected ? 'bg-white/20 ring-1 ring-white/40' : 'hover:bg-white/10'
+              }"
+            >
+              <div class="w-12 h-12 rounded-2xl ${app.color} flex items-center justify-center shadow-lg">
+                <i data-lucide="${app.icon}" class="w-6 h-6"></i>
+              </div>
+              <span class="text-xs font-semibold text-white drop-shadow leading-tight">${esc(app.name)}</span>
+            </button>
+          `;
+        }).join('');
+
+        container.querySelectorAll('[data-desk-app]').forEach(btn => {
+          const appId = btn.getAttribute('data-desk-app');
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            state.selectedDesktopIcon = appId;
+            renderDesktopIcons();
+            lucide.createIcons();
+          });
+          btn.addEventListener('dblclick', () => launchApp(appId));
+        });
+      }
+
+      function renderDock() {
+        const dock = document.getElementById('dock-apps-list');
+        dock.innerHTML = Object.values(APPS).map(app => {
+          const win = state.windows.find(w => w.appId === app.id);
+          const isOpen = !!win;
+          const isActive = win && !win.minimized && state.activeWinId === win.id;
+
+          return `
+            <button
+              data-dock-app="${app.id}"
+              title="${esc(app.name)}"
+              class="relative group flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition ${
+                isActive
+                  ? 'bg-white/20 ring-1 ring-white/30'
+                  : isOpen
+                  ? 'bg-white/10 hover:bg-white/15'
+                  : 'hover:bg-white/10'
+              }"
+            >
+              <div class="w-6 h-6 rounded-lg ${app.color} flex items-center justify-center shadow-sm">
+                <i data-lucide="${app.icon}" class="w-3.5 h-3.5"></i>
+              </div>
+              <span class="hidden lg:inline text-xs font-semibold text-slate-100">${esc(app.name)}</span>
+              ${isOpen ? `
+                <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${isActive ? 'os-accent-bg' : 'bg-slate-400'}"></span>
+              ` : ''}
+            </button>
+          `;
+        }).join('');
+
+        dock.querySelectorAll('[data-dock-app]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const appId = btn.getAttribute('data-dock-app');
+            const win = state.windows.find(w => w.appId === appId);
+            if (!win) {
+              launchApp(appId);
+            } else if (win.minimized || state.activeWinId !== win.id) {
+              win.minimized = false;
+              focusWindow(win.id);
+              renderWindows();
+            } else {
+              toggleMinimize(win.id);
+            }
+          });
+        });
+
+        lucide.createIcons();
+      }
+
+      function renderStartMenuGrid(filter = '') {
+        const grid = document.getElementById('start-apps-grid');
+        const q = filter.toLowerCase();
+        const filtered = Object.values(APPS).filter(a =>
+          a.name.toLowerCase().includes(q) || a.subtitle.toLowerCase().includes(q)
+        );
+
+        grid.innerHTML = filtered.map(app => `
+          <button data-start-app="${app.id}" class="p-2.5 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 flex flex-col items-center text-center gap-1.5 transition">
+            <div class="w-10 h-10 rounded-xl ${app.color} flex items-center justify-center shadow">
+              <i data-lucide="${app.icon}" class="w-5 h-5"></i>
+            </div>
+            <div class="text-xs font-bold text-white leading-tight">${esc(app.name)}</div>
+            <div class="text-[10px] text-slate-400 leading-tight truncate w-full">${esc(app.subtitle)}</div>
+          </button>
+        `).join('');
+
+        grid.querySelectorAll('[data-start-app]').forEach(btn => {
+          btn.addEventListener('click', () => launchApp(btn.getAttribute('data-start-app')));
+        });
+        lucide.createIcons();
+      }
+
+      // --- Render Active Windows ---
+      function renderWindows() {
+        const layer = document.getElementById('windows-layer');
+        layer.innerHTML = state.windows
+          .filter(w => !w.minimized)
+          .map(win => {
+            const spec = APPS[win.appId];
+            const isFocused = state.activeWinId === win.id;
+            const styleStr = win.maximized
+              ? `left: 0px; top: 0px; width: 100%; height: 100%; z-index: ${win.z}; border-radius: 0;`
+              : `left: ${win.x}px; top: ${win.y}px; width: ${win.w}px; height: ${win.h}px; z-index: ${win.z};`;
+
+            return `
+              <div
+                data-win-id="${win.id}"
+                style="${styleStr}"
+                class="os-window-box pointer-events-auto absolute os-window-glass border ${
+                  isFocused ? 'border-white/30 shadow-2xl' : 'border-white/15 shadow-xl'
+                } rounded-2xl flex flex-col overflow-hidden"
+              >
+                <!-- Draggable Title Bar -->
+                <div
+                  data-drag-win="${win.id}"
+                  class="px-3 py-2 bg-white/5 border-b border-white/10 flex items-center justify-between gap-2 cursor-move flex-shrink-0"
+                >
+                  <div class="flex items-center gap-2 overflow-hidden">
+                    <div class="w-5 h-5 rounded-md ${spec.color} flex items-center justify-center flex-shrink-0">
+                      <i data-lucide="${spec.icon}" class="w-3 h-3"></i>
+                    </div>
+                    <span class="text-xs font-bold truncate">${esc(win.title)}</span>
+                  </div>
+
+                  <!-- Window Controls -->
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <button data-win-min="${win.id}" title="Minimize" class="w-6 h-6 rounded-lg hover:bg-white/15 flex items-center justify-center text-slate-300">
+                      <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button data-win-max="${win.id}" title="Maximize / Restore" class="w-6 h-6 rounded-lg hover:bg-white/15 flex items-center justify-center text-slate-300">
+                      <i data-lucide="square" class="w-3 h-3"></i>
+                    </button>
+                    <button data-win-close="${win.id}" title="Close" class="w-6 h-6 rounded-lg hover:bg-rose-500 hover:text-white flex items-center justify-center text-slate-300 transition">
+                      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- App Content Body -->
+                <div id="win-body-${win.id}" class="flex-1 overflow-hidden flex flex-col">
+                  ${renderAppContent(win.appId)}
+                </div>
+
+                <!-- Bottom-Right Resize Grip -->
+                ${!win.maximized ? `
+                  <div data-resize-win="${win.id}" class="win-resize-handle absolute bottom-0 right-0 w-4 h-4 z-30"></div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+
+        // Bind Window Focus, Drag, Resize & Controls
+        layer.querySelectorAll('.os-window-box').forEach(box => {
+          const id = box.getAttribute('data-win-id');
+          box.addEventListener('mousedown', () => focusWindow(id));
+        });
+
+        layer.querySelectorAll('[data-win-min]').forEach(b => {
+          b.addEventListener('click', (e) => { e.stopPropagation(); toggleMinimize(b.getAttribute('data-win-min')); });
+        });
+        layer.querySelectorAll('[data-win-max]').forEach(b => {
+          b.addEventListener('click', (e) => { e.stopPropagation(); toggleMaximize(b.getAttribute('data-win-max')); });
+        });
+        layer.querySelectorAll('[data-win-close]').forEach(b => {
+          b.addEventListener('click', (e) => { e.stopPropagation(); closeWindow(b.getAttribute('data-win-close')); });
+        });
+
+        // Dragging logic
+        layer.querySelectorAll('[data-drag-win]').forEach(handle => {
+          const id = handle.getAttribute('data-drag-win');
+          handle.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button')) return;
+            const win = state.windows.find(w => w.id === id);
+            if (!win || win.maximized) return;
+            focusWindow(id);
+            const startX = e.clientX - win.x;
+            const startY = e.clientY - win.y;
+            const box = layer.querySelector(`[data-win-id="${id}"]`);
+
+            function onMove(ev) {
+              win.x = Math.max(0, Math.min(window.innerWidth - 120, ev.clientX - startX));
+              win.y = Math.max(0, Math.min(window.innerHeight - 90, ev.clientY - startY));
+              if (box) {
+                box.style.left = win.x + 'px';
+                box.style.top = win.y + 'px';
+              }
+            }
+            function onUp() {
+              window.removeEventListener('mousemove', onMove);
+              window.removeEventListener('mouseup', onUp);
+            }
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+          });
+        });
+
+        // Resizing logic
+        layer.querySelectorAll('[data-resize-win]').forEach(grip => {
+          const id = grip.getAttribute('data-resize-win');
+          grip.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            const win = state.windows.find(w => w.id === id);
+            if (!win || win.maximized) return;
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const initW = win.w;
+            const initH = win.h;
+            const box = layer.querySelector(`[data-win-id="${id}"]`);
+
+            function onMove(ev) {
+              win.w = Math.max(360, initW + (ev.clientX - startX));
+              win.h = Math.max(260, initH + (ev.clientY - startY));
+              if (box) {
+                box.style.width = win.w + 'px';
+                box.style.height = win.h + 'px';
+              }
+            }
+            function onUp() {
+              window.removeEventListener('mousemove', onMove);
+              window.removeEventListener('mouseup', onUp);
+            }
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+          });
+        });
+
+        // Bind App-Specific Interactive Controls inside open windows
+        state.windows.filter(w => !w.minimized).forEach(win => bindAppEvents(win.appId));
+        lucide.createIcons();
+      }
+
+      // =========================================================================
+      // APP 1: COLTBROWSER (INTEGRATED MINI EDITION)
+      // =========================================================================
+      function renderBrowserApp() {
+        const activeTab = state.browserTabs.find(t => t.id === state.activeBrowserTab) || state.browserTabs[0];
+        return `
+          <div class="h-full flex flex-col bg-zinc-950/90 text-xs">
+            <!-- Browser Tab Strip -->
+            <div class="flex items-center gap-1 px-2 pt-1.5 bg-black/40 border-b border-white/10">
+              <div class="flex-1 flex items-center gap-1 overflow-x-auto no-scrollbar">
+                ${state.browserTabs.map(t => `
+                  <div data-btab="${t.id}" class="flex items-center gap-2 px-2.5 py-1 rounded-t-lg cursor-pointer max-w-[160px] ${
+                    t.id === activeTab.id ? 'bg-zinc-900 text-amber-400 font-bold' : 'text-slate-400 hover:bg-white/5'
+                  }">
+                    <span class="truncate flex-1">${esc(t.title)}</span>
+                    ${state.browserTabs.length > 1 ? `<button data-bclose="${t.id}" class="hover:text-rose-400">&times;</button>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+              <button id="cb-new-tab" class="px-2 py-0.5 rounded hover:bg-white/10 font-bold">+</button>
+            </div>
+
+            <!-- Omnibox Toolbar -->
+            <form id="cb-omnibox-form" class="p-2 bg-zinc-900 border-b border-white/10 flex items-center gap-1.5">
+              <button type="button" id="cb-home-btn" class="px-2 py-1 rounded bg-white/10 hover:bg-white/15 font-semibold">Home</button>
+              <input id="cb-url-input" type="text" value="${esc(activeTab.url === 'colt://home' ? '' : activeTab.url)}" placeholder="Search DuckDuckGo or enter URL..." class="flex-1 px-2.5 py-1 rounded-lg bg-black/60 border border-white/15 text-white focus:outline-none focus:border-amber-400 font-mono" />
+              <button type="submit" class="px-3 py-1 rounded-lg os-accent-bg font-bold">Go</button>
+            </form>
+
+            <!-- Quick Bookmarks Bar -->
+            <div class="px-2.5 py-1 bg-black/30 border-b border-white/10 flex items-center gap-2 overflow-x-auto no-scrollbar text-[11px]">
+              <button data-bnav="https://www.hvs.org" class="hover:text-amber-400 whitespace-nowrap">🏫 HVS Portal</button>
+              <button data-bnav="https://www.khanacademy.org" class="hover:text-amber-400 whitespace-nowrap">🎓 Khan Academy</button>
+              <button data-bnav="https://www.desmos.com/calculator" class="hover:text-amber-400 whitespace-nowrap">📐 Desmos</button>
+              <button data-bnav="https://en.m.wikipedia.org" class="hover:text-amber-400 whitespace-nowrap">📚 Wikipedia</button>
+              <span class="opacity-30">|</span>
+              <a href="https://sites.google.com/hvs.org/coltbrowser" target="_blank" class="text-sky-400 hover:underline whitespace-nowrap">Standard ↗</a>
+              <a href="https://sites.google.com/HVS.org/coltbrowser-lite" target="_blank" class="text-emerald-400 hover:underline whitespace-nowrap">LITE ↗</a>
+            </div>
+
+            <!-- Viewport -->
+            <div id="cb-viewport" class="flex-1 overflow-y-auto">
+              ${renderBrowserViewportHtml(activeTab)}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderBrowserViewportHtml(tab) {
+        if (tab.url === 'colt://home') {
+          return `
+            <div class="p-6 max-w-lg mx-auto text-center space-y-4">
+              <div class="inline-block px-3 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono text-[11px]">
+                DuckDuckGo Privacy Search &bull; Muir Middle School
+              </div>
+              <h2 class="text-2xl font-extrabold">ColtBrowser <span class="text-xs font-mono text-slate-400">Integrated</span></h2>
+              <form id="cb-home-search" class="flex gap-2">
+                <input id="cb-home-input" type="text" placeholder="Search privately with DuckDuckGo..." class="flex-1 px-3 py-2 rounded-xl bg-white/10 border border-white/15 text-white focus:outline-none focus:border-amber-400" />
+                <button type="submit" class="px-4 py-2 rounded-xl os-accent-bg font-bold">Search</button>
+              </form>
+              <div class="grid grid-cols-3 gap-2 pt-2 text-[11px] font-mono">
+                <a href="https://sites.google.com/hvs.org/coltbrowser" target="_blank" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-amber-400">ColtBrowser v1.1 ↗</a>
+                <a href="https://sites.google.com/HVS.org/coltbrowser-lite" target="_blank" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-emerald-400">ColtBrowser LITE ↗</a>
+                <button data-bnav="DuckDuckGo Privacy" class="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-sky-400">Sample Search</button>
+              </div>
+            </div>
+          `;
+        }
+        if (tab.url.startsWith('http://') || tab.url.startsWith('https://')) {
+          return `
+            <div class="h-full flex flex-col">
+              <div class="px-3 py-1 bg-amber-500/15 text-amber-300 text-[11px] flex justify-between items-center">
+                <span class="truncate font-mono">${esc(tab.url)}</span>
+                <a href="${esc(tab.url)}" target="_blank" class="underline font-bold ml-2 flex-shrink-0">Open External ↗</a>
+              </div>
+              <iframe src="${esc(tab.url)}" sandbox="allow-scripts allow-same-origin allow-forms" class="flex-1 w-full bg-white border-0"></iframe>
+            </div>
+          `;
+        }
+        return `
+          <div class="p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+              <span class="font-bold">DuckDuckGo Results: "${esc(tab.query)}"</span>
+              <a href="https://duckduckgo.com/?q=${encodeURIComponent(tab.query)}" target="_blank" class="px-2.5 py-1 rounded os-accent-bg font-bold">Full DDG ↗</a>
+            </div>
+            <div id="cb-ddg-results" class="space-y-2.5">
+              ${tab.results || '<div class="text-slate-400 font-mono">Querying DuckDuckGo Instant Answer API...</div>'}
+            </div>
+          </div>
+        `;
+      }
+
+      async function runBrowserQuery(raw) {
+        const text = (raw || '').trim();
+        const tab = state.browserTabs.find(t => t.id === state.activeBrowserTab);
+        if (!tab) return;
+
+        if (!text || text === 'colt://home') {
+          tab.url = 'colt://home';
+          tab.title = 'ColtBrowser Home';
+          renderWindows();
+          return;
+        }
+
+        if (/^https?:\/\//i.test(text) || (!/\s/.test(text) && text.includes('.'))) {
+          const url = /^https?:\/\//i.test(text) ? text : 'https://' + text;
+          tab.url = url;
+          tab.title = url.replace(/^https?:\/\//, '').split('/')[0];
+          renderWindows();
+          return;
+        }
+
+        tab.url = `ddg://${text}`;
+        tab.query = text;
+        tab.title = `${text} — DDG`;
+        tab.results = null;
+        renderWindows();
+
+        try {
+          const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(text)}&format=json&no_html=1&skip_disambig=1`);
+          const data = await res.json();
+          let html = '';
+          if (data.AbstractText) {
+            html += `<div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30"><div class="font-bold text-amber-400 mb-1">${esc(data.Heading || text)}</div><p class="text-slate-200 leading-relaxed">${esc(data.AbstractText)}</p></div>`;
+          }
+          if (Array.isArray(data.RelatedTopics)) {
+            data.RelatedTopics.slice(0, 5).forEach(t => {
+              if (t.Text && t.FirstURL) {
+                html += `<div class="p-2.5 rounded-xl bg-white/5 border border-white/10"><button data-bnav="${esc(t.FirstURL)}" class="text-sky-400 font-bold hover:underline text-left">${esc(t.Text.split(' - ')[0])}</button><div class="text-slate-400 mt-0.5">${esc(t.Text)}</div></div>`;
+              }
+            });
+          }
+          tab.results = html || `<div class="text-slate-400">No instant summary found. Click "Full DDG ↗" above for web results.</div>`;
+        } catch (e) {
+          tab.results = `<div class="text-rose-400">Offline or blocked by network filter.</div>`;
+        }
+        renderWindows();
+      }
+
+      // =========================================================================
+      // APP 2: COLTEMULATE (INTEGRATED HYPERVISOR)
+      // =========================================================================
+      function renderEmulateApp() {
+        const em = state.emulate;
+        return `
+          <div class="h-full flex flex-col bg-slate-950/90 font-mono text-xs">
+            <!-- Top Strip -->
+            <div class="px-3 py-2 bg-black/40 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/40 font-bold">HYPERVISOR</span>
+                <span class="font-bold">${esc(em.sample.osName)}</span>
+              </div>
+              <a href="https://sites.google.com/hvs.org/ColtEmulate" target="_blank" class="text-[11px] text-amber-400 hover:underline">Full ColtEmulate Portal ↗</a>
+            </div>
+
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
+              <!-- Left: Sample Payloads & Inspector -->
+              <div class="p-3 border-r border-white/10 overflow-y-auto space-y-3">
+                <div>
+                  <div class="text-[10px] uppercase text-slate-400 mb-1.5">Select Sample Binary / Disk Image:</div>
+                  <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                    ${Object.entries(EMULATE_SAMPLES).map(([k, item]) => `
+                      <button data-em-sample="${k}" class="p-2 rounded-lg border text-left truncate ${
+                        em.sample.name === item.name ? 'border-amber-400 bg-amber-500/15 text-amber-300 font-bold' : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      }">
+                        ${esc(item.name)}
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- Binary Header Box -->
+                <div class="p-3 rounded-xl bg-black/50 border border-white/10 space-y-1 text-[11px]">
+                  <div class="text-sky-400 font-bold border-b border-white/10 pb-1">Binary Header Inspector</div>
+                  <div>File: <strong class="text-white">${esc(em.sample.name)}</strong></div>
+                  <div>Magic: <span class="text-emerald-400">${esc(em.sample.magic)}</span></div>
+                  <div>Target: <span>${esc(em.sample.osName)}</span></div>
+                  <div>Size: <span>${esc(em.sample.size)}</span></div>
+                </div>
+
+                <button id="em-btn-exec" class="w-full py-2 rounded-xl os-accent-bg font-bold">
+                  Mount &amp; Execute in Guest OS
+                </button>
+              </div>
+
+              <!-- Right: Guest OS Screen & Serial Log -->
+              <div class="p-3 flex flex-col justify-between bg-gradient-to-br from-slate-900 to-indigo-950/70 overflow-y-auto">
+                <div class="p-3 rounded-xl bg-black/60 border border-white/15 space-y-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="font-bold text-emerald-400">&#9679; GUEST VM ACTIVE</span>
+                    <span class="text-slate-400">${esc(em.sample.os.toUpperCase())}</span>
+                  </div>
+                  <div class="text-xs font-bold text-white">${esc(em.sample.name)}</div>
+                  <div class="text-[11px] text-slate-300">
+                    ${em.executed
+                      ? `Process running inside ${esc(em.sample.osName)} sandbox (Exit status: 0).`
+                      : 'Click "Mount & Execute" on the left to boot payload inside guest OS.'}
+                  </div>
+                </div>
+
+                <div class="mt-3 p-2.5 rounded-xl bg-black/80 border border-white/10 text-[11px] text-emerald-400 space-y-1 max-h-36 overflow-y-auto">
+                  <div class="text-slate-400 font-bold">Serial Console (/dev/ttyS0):</div>
+                  ${em.logs.map(l => `<div>${esc(l)}</div>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // =========================================================================
+      // APP 3: COLTNOTES (MARKDOWN & FLASHCARD STUDY SUITE)
+      // =========================================================================
+      function extractFlashcards(mdText) {
+        const lines = mdText.split('\n').map(l => l.trim()).filter(l => l.startsWith('- ') || l.startsWith('* '));
+        return lines.map((line, i) => {
+          const clean = line.replace(/^[-*]\s+/, '');
+          const parts = clean.split(/[:—-]/);
+          if (parts.length > 1) {
+            return { q: parts[0].trim(), a: parts.slice(1).join(' - ').trim() };
+          }
+          return { q: `Study Point #${i + 1}`, a: clean };
+        });
+      }
+
+      function renderNotesApp() {
+        const n = state.notes;
+        const words = n.body.trim() ? n.body.trim().split(/\s+/).length : 0;
+        const chars = n.body.length;
+        const cards = extractFlashcards(n.body);
+
+        if (n.quizMode) {
+          const card = cards[n.cardIndex % Math.max(1, cards.length)] || { q: 'No bullet points found', a: 'Add "- Term: Definition" lines in Editor mode to auto-generate flashcards!' };
+          return `
+            <div class="h-full flex flex-col p-4 bg-zinc-950/90 text-xs">
+              <div class="flex items-center justify-between border-b border-white/10 pb-2.5 mb-4">
+                <span class="font-bold os-accent-text">Flashcard Quiz Mode (${cards.length} cards)</span>
+                <button id="cn-exit-quiz" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">Back to Editor</button>
+              </div>
+
+              <div class="flex-1 flex flex-col items-center justify-center">
+                <div id="cn-flashcard" class="w-full max-w-md p-6 rounded-2xl bg-white/10 border border-amber-400/40 text-center cursor-pointer space-y-3 shadow-xl">
+                  <div class="text-[10px] font-mono uppercase text-amber-400">${n.cardFlipped ? 'ANSWER (Click to flip)' : 'QUESTION / PROMPT (Click to flip)'}</div>
+                  <div class="text-base sm:text-lg font-bold text-white leading-relaxed">
+                    ${esc(n.cardFlipped ? card.a : card.q)}
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 mt-4 font-mono">
+                  <button id="cn-prev-card" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20">&larr; Prev</button>
+                  <span>${cards.length ? (n.cardIndex % cards.length) + 1 : 0} / ${cards.length}</span>
+                  <button id="cn-next-card" class="px-3 py-1.5 rounded-lg os-accent-bg font-bold">Next &rarr;</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="h-full flex flex-col bg-zinc-950/90 text-xs">
+            <div class="px-3 py-2 bg-black/40 border-b border-white/10 flex flex-wrap items-center justify-between gap-2">
+              <input id="cn-title-input" type="text" value="${esc(n.title)}" class="px-2 py-1 rounded bg-white/10 border border-white/15 font-mono font-bold text-white focus:outline-none focus:border-amber-400" />
+              <div class="flex items-center gap-1.5">
+                <button id="cn-quiz-btn" class="px-2.5 py-1 rounded-lg os-accent-bg font-bold">Flashcard Quiz (${cards.length})</button>
+                <button id="cn-export-md" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 font-semibold">Export .md</button>
+              </div>
+            </div>
+            <textarea id="cn-editor" class="flex-1 w-full p-4 bg-transparent font-mono text-xs sm:text-sm text-slate-100 leading-relaxed focus:outline-none resize-none" placeholder="Write Markdown or bullet points (- Term: Definition) to auto-generate flashcards...">${esc(n.body)}</textarea>
+            <div class="px-3 py-1.5 bg-black/40 border-t border-white/10 flex justify-between font-mono text-[11px] text-slate-400">
+              <span>${words} words &bull; ${chars} chars</span>
+              <span class="text-emerald-400">Auto-saved to ColtOS</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // =========================================================================
+      // APP 4: COLTFILES (VIRTUAL STUDENT FILE MANAGER)
+      // =========================================================================
+      function renderFilesApp() {
+        const dirs = Object.keys(state.vfs);
+        const items = state.vfs[state.currentDir] || [];
+
+        return `
+          <div class="h-full flex flex-col bg-zinc-950/90 font-mono text-xs">
+            <div class="px-3 py-2 bg-black/40 border-b border-white/10 flex items-center justify-between gap-2">
+              <span class="text-emerald-400 font-bold truncate">${esc(state.currentDir)}</span>
+              <button id="cf-new-note-btn" class="px-2.5 py-1 rounded-lg os-accent-bg font-bold flex-shrink-0">+ New Note File</button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 overflow-hidden">
+              <!-- Sidebar Folders -->
+              <div class="p-2 border-b sm:border-b-0 sm:border-r border-white/10 space-y-1 bg-black/20">
+                ${dirs.map(d => {
+                  const shortName = d.split('/').pop();
+                  return `
+                    <button data-cf-dir="${esc(d)}" class="w-full px-2.5 py-1.5 rounded-lg text-left flex items-center gap-2 ${
+                      state.currentDir === d ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'text-slate-300 hover:bg-white/10'
+                    }">
+                      <i data-lucide="folder" class="w-3.5 h-3.5"></i>
+                      <span>${esc(shortName)}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+
+              <!-- Files List -->
+              <div class="sm:col-span-2 p-3 overflow-y-auto space-y-1.5">
+                ${items.map((item, idx) => `
+                  <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-2">
+                    <div class="overflow-hidden">
+                      <div class="font-bold text-white truncate">${esc(item.name)}</div>
+                      <div class="text-[10px] text-slate-400">${esc(item.type.toUpperCase())} &bull; ${esc(item.size)}</div>
+                    </div>
+                    <button data-cf-open="${idx}" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-amber-400 hover:text-slate-950 font-bold flex-shrink-0 transition">
+                      Open
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // =========================================================================
+      // APP 5: COLTTERMINAL (INTERACTIVE SHELL)
+      // =========================================================================
+      function renderTerminalApp() {
+        return `
+          <div class="h-full flex flex-col bg-black/95 font-mono text-xs">
+            <div id="ct-output" class="flex-1 overflow-y-auto p-3 space-y-1.5 text-emerald-400">
+              ${state.terminalHistory.map(line => `<div class="whitespace-pre-wrap leading-relaxed">${esc(line)}</div>`).join('')}
+            </div>
+            <form id="ct-form" class="px-3 py-2 border-t border-white/15 flex items-center gap-2 bg-zinc-950">
+              <span class="os-accent-text font-bold">muir@coltos:~$</span>
+              <input id="ct-input" type="text" autocomplete="off" spellcheck="false" placeholder="Type help, ls, neofetch, open browser, calc 12*8..." class="flex-1 bg-transparent text-white focus:outline-none" />
+            </form>
+          </div>
+        `;
+      }
+
+      function runTerminalCommand(raw) {
+        const cmd = raw.trim();
+        state.terminalHistory.push(`muir@coltos:~$ ${cmd}`);
+        const lower = cmd.toLowerCase();
+
+        if (lower === 'help') {
+          state.terminalHistory.push('Commands: help, ls, neofetch, date, calc <expr>, open <browser|emulate|notes|files|settings>, clear');
+        } else if (lower === 'ls') {
+          const files = (state.vfs[state.terminalCwd] || []).map(f => f.name).join('   ');
+          state.terminalHistory.push(files || '(empty directory)');
+        } else if (lower === 'neofetch') {
+          state.terminalHistory.push(
+`   ______      ____  ____  _____
+  / ____/___  / / /_/ __ \\/ ___/   OS: ColtOS v1.0.0 Web Desktop
+ / /   / __ \\/ / __/ / / /\\__ \\    Author: Henry Green
+/ /___/ /_/ / / /_/ /_/ /___/ /    School: Muir Middle School (HVS)
+\\____/\\____/_/\\__/\\____//____/     Apps: ColtBrowser, ColtEmulate, ColtNotes`
+          );
+        } else if (lower === 'date') {
+          state.terminalHistory.push(new Date().toString());
+        } else if (lower.startsWith('calc ')) {
+          const expr = cmd.slice(5).replace(/[^0-9+\-*/().\s]/g, '');
+          try {
+            const val = Function(`"use strict"; return (${expr})`)();
+            state.terminalHistory.push(`= ${val}`);
+          } catch (e) {
+            state.terminalHistory.push('Invalid math expression');
+          }
+        } else if (lower.startsWith('open ')) {
+          const target = lower.slice(5).trim();
+          if (APPS[target]) {
+            launchApp(target);
+            state.terminalHistory.push(`Launched ${APPS[target].name}`);
+          } else {
+            state.terminalHistory.push(`Unknown app "${target}". Try: browser, emulate, notes, files, settings`);
+          }
+        } else if (lower === 'clear') {
+          state.terminalHistory = [];
+        } else if (cmd) {
+          state.terminalHistory.push(`bash: ${cmd}: command not found (type "help")`);
+        }
+        renderWindows();
+      }
+
+      // =========================================================================
+      // APP 6: COLTSETTINGS (CUSTOMIZATION & SYSTEM INFO)
+      // =========================================================================
+      function renderSettingsApp() {
+        const s = state.settings;
+        return `
+          <div class="h-full overflow-y-auto p-4 bg-zinc-950/90 text-xs space-y-4">
+            <div class="border-b border-white/10 pb-2.5">
+              <h2 class="text-base font-extrabold">ColtOS Settings &amp; Personalization</h2>
+              <p class="text-[11px] text-slate-400">Built by Henry Green for Muir Middle School (HVS) &bull; ColtApps Suite</p>
+            </div>
+
+            <!-- Wallpapers -->
+            <div class="space-y-2">
+              <div class="font-bold uppercase text-[11px] text-slate-400">Desktop Wallpaper</div>
+              <div class="grid grid-cols-2 gap-2">
+                ${[
+                  { id: 'muir', label: 'Muir Colts Navy & Gold' },
+                  { id: 'cyber', label: 'Midnight Cyber' },
+                  { id: 'alpine', label: 'Alpine Dawn' },
+                  { id: 'aurora', label: 'Aurora Slate' }
+                ].map(w => `
+                  <button data-set-wp="${w.id}" class="p-2.5 rounded-xl border text-left font-semibold ${
+                    s.wallpaper === w.id ? 'os-accent-border bg-white/15 os-accent-text' : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }">
+                    ${w.label}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Accent Colors -->
+            <div class="space-y-2">
+              <div class="font-bold uppercase text-[11px] text-slate-400">System Accent Color</div>
+              <div class="flex flex-wrap gap-2">
+                ${Object.entries(ACCENT_MAP).map(([k, val]) => `
+                  <button data-set-acc="${k}" class="px-3 py-1.5 rounded-xl border flex items-center gap-2 font-semibold capitalize ${
+                    s.accent === k ? 'os-accent-border bg-white/15' : 'border-white/10 bg-white/5'
+                  }">
+                    <span class="w-3 h-3 rounded-full" style="background:${val.hex}"></span>
+                    <span>${k}</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Glass Opacity & Taskbar Position -->
+            <div class="p-3 rounded-xl bg-white/5 border border-white/10 space-y-3">
+              <div>
+                <div class="flex justify-between mb-1">
+                  <span class="font-semibold">Window Glass Opacity</span>
+                  <span class="font-mono os-accent-text">${Math.round(s.glassOpacity * 100)}%</span>
+                </div>
+                <input id="cs-opacity-slider" type="range" min="0.55" max="0.98" step="0.03" value="${s.glassOpacity}" class="w-full accent-amber-400" />
+              </div>
+
+              <label class="flex items-center justify-between cursor-pointer pt-1">
+                <span class="font-semibold">Dock Taskbar at Top of Screen</span>
+                <input id="cs-top-bar" type="checkbox" ${s.topTaskbar ? 'checked' : ''} class="w-4 h-4 accent-amber-400" />
+              </label>
+            </div>
+
+            <!-- Reset Storage -->
+            <div class="flex items-center justify-between pt-2 border-t border-white/10">
+              <span class="font-mono text-[11px] text-slate-400">Copyright &copy; 2026 Henry Green &bull; Apache 2.0</span>
+              <button id="cs-reset-all" class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">
+                Reset ColtOS Data
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // --- Route App Content Renderer ---
+      function renderAppContent(appId) {
+        if (appId === 'browser') return renderBrowserApp();
+        if (appId === 'emulate') return renderEmulateApp();
+        if (appId === 'notes') return renderNotesApp();
+        if (appId === 'files') return renderFilesApp();
+        if (appId === 'terminal') return renderTerminalApp();
+        if (appId === 'settings') return renderSettingsApp();
+        return '';
+      }
+
+      // --- Bind App-Specific Interactive Events ---
+      function bindAppEvents(appId) {
+        if (appId === 'browser') {
+          const form = document.getElementById('cb-omnibox-form');
+          if (form) {
+            form.addEventListener('submit', (e) => {
+              e.preventDefault();
+              runBrowserQuery(document.getElementById('cb-url-input').value);
+            });
+          }
+          const homeForm = document.getElementById('cb-home-search');
+          if (homeForm) {
+            homeForm.addEventListener('submit', (e) => {
+              e.preventDefault();
+              runBrowserQuery(document.getElementById('cb-home-input').value);
+            });
+          }
+          const homeBtn = document.getElementById('cb-home-btn');
+          if (homeBtn) homeBtn.addEventListener('click', () => runBrowserQuery('colt://home'));
+
+          const newTabBtn = document.getElementById('cb-new-tab');
+          if (newTabBtn) {
+            newTabBtn.addEventListener('click', () => {
+              const id = 'bt_' + Date.now();
+              state.browserTabs.push({ id, title: 'ColtBrowser Home', query: '', url: 'colt://home', results: null });
+              state.activeBrowserTab = id;
+              renderWindows();
+            });
+          }
+
+          document.querySelectorAll('[data-btab]').forEach(el => {
+            el.addEventListener('click', (e) => {
+              if (e.target.closest('[data-bclose]')) return;
+              state.activeBrowserTab = el.getAttribute('data-btab');
+              renderWindows();
+            });
+          });
+          document.querySelectorAll('[data-bclose]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const cid = btn.getAttribute('data-bclose');
+              state.browserTabs = state.browserTabs.filter(t => t.id !== cid);
+              if (state.activeBrowserTab === cid) state.activeBrowserTab = state.browserTabs[0].id;
+              renderWindows();
+            });
+          });
+          document.querySelectorAll('[data-bnav]').forEach(btn => {
+            btn.addEventListener('click', () => runBrowserQuery(btn.getAttribute('data-bnav')));
+          });
+        }
+
+        if (appId === 'emulate') {
+          document.querySelectorAll('[data-em-sample]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const key = btn.getAttribute('data-em-sample');
+              state.emulate.sample = { ...EMULATE_SAMPLES[key] };
+              state.emulate.executed = false;
+              state.emulate.logs.push(`[MOUNT] Loaded ${state.emulate.sample.name} (${state.emulate.sample.magic})`);
+              renderWindows();
+            });
+          });
+          const execBtn = document.getElementById('em-btn-exec');
+          if (execBtn) {
+            execBtn.addEventListener('click', () => {
+              state.emulate.executed = true;
+              state.emulate.logs.push(`[EXEC] Running ${state.emulate.sample.name} inside ${state.emulate.sample.osName}`);
+              notify(`Executed ${state.emulate.sample.name} in ColtEmulate`);
+              renderWindows();
+            });
+          }
+        }
+
+        if (appId === 'notes') {
+          const editor = document.getElementById('cn-editor');
+          if (editor) {
+            editor.addEventListener('input', (e) => {
+              state.notes.body = e.target.value;
+              saveOS();
+            });
+          }
+          const titleInp = document.getElementById('cn-title-input');
+          if (titleInp) {
+            titleInp.addEventListener('change', (e) => {
+              state.notes.title = e.target.value.trim() || 'Untitled.md';
+              saveOS();
+            });
+          }
+          const quizBtn = document.getElementById('cn-quiz-btn');
+          if (quizBtn) {
+            quizBtn.addEventListener('click', () => {
+              state.notes.quizMode = true;
+              state.notes.cardIndex = 0;
+              state.notes.cardFlipped = false;
+              renderWindows();
+            });
+          }
+          const exitQuiz = document.getElementById('cn-exit-quiz');
+          if (exitQuiz) {
+            exitQuiz.addEventListener('click', () => {
+              state.notes.quizMode = false;
+              renderWindows();
+            });
+          }
+          const cardEl = document.getElementById('cn-flashcard');
+          if (cardEl) {
+            cardEl.addEventListener('click', () => {
+              state.notes.cardFlipped = !state.notes.cardFlipped;
+              renderWindows();
+            });
+          }
+          const prevBtn = document.getElementById('cn-prev-card');
+          if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+              state.notes.cardIndex = Math.max(0, state.notes.cardIndex - 1);
+              state.notes.cardFlipped = false;
+              renderWindows();
+            });
+          }
+          const nextBtn = document.getElementById('cn-next-card');
+          if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+              state.notes.cardIndex++;
+              state.notes.cardFlipped = false;
+              renderWindows();
+            });
+          }
+          const exportBtn = document.getElementById('cn-export-md');
+          if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+              const blob = new Blob([state.notes.body], { type: 'text/markdown' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = state.notes.title.endsWith('.md') ? state.notes.title : state.notes.title + '.md';
+              a.click();
+              notify(`Exported ${a.download}`);
+            });
+          }
+        }
+
+        if (appId === 'files') {
+          document.querySelectorAll('[data-cf-dir]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              state.currentDir = btn.getAttribute('data-cf-dir');
+              renderWindows();
+            });
+          });
+          document.querySelectorAll('[data-cf-open]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const idx = Number(btn.getAttribute('data-cf-open'));
+              const item = (state.vfs[state.currentDir] || [])[idx];
+              if (!item) return;
+              if (item.type === 'note') {
+                state.notes.title = item.name;
+                state.notes.body = item.content || '';
+                state.notes.quizMode = false;
+                launchApp('notes');
+              } else if (item.type === 'binary') {
+                state.emulate.sample = { ...EMULATE_SAMPLES[item.sampleKey] };
+                state.emulate.executed = false;
+                launchApp('emulate');
+              } else if (item.type === 'app') {
+                launchApp(item.appId);
+              }
+            });
+          });
+          const newNoteBtn = document.getElementById('cf-new-note-btn');
+          if (newNoteBtn) {
+            newNoteBtn.addEventListener('click', () => {
+              const name = `Note_${(state.vfs[state.currentDir]?.length || 0) + 1}.md`;
+              state.vfs[state.currentDir].push({
+                name,
+                type: 'note',
+                size: '0.2 KB',
+                content: `# ${name}\n- Key Concept: Add your study notes here`
+              });
+              saveOS();
+              renderWindows();
+              notify(`Created ${name}`);
+            });
+          }
+        }
+
+        if (appId === 'terminal') {
+          const out = document.getElementById('ct-output');
+          if (out) out.scrollTop = out.scrollHeight;
+          const form = document.getElementById('ct-form');
+          if (form) {
+            form.addEventListener('submit', (e) => {
+              e.preventDefault();
+              const inp = document.getElementById('ct-input');
+              if (inp.value.trim()) {
+                runTerminalCommand(inp.value);
+              }
+            });
+          }
+        }
+
+        if (appId === 'settings') {
+          document.querySelectorAll('[data-set-wp]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              state.settings.wallpaper = btn.getAttribute('data-set-wp');
+              saveOS();
+              applySettings();
+              renderWindows();
+            });
+          });
+          document.querySelectorAll('[data-set-acc]').forEach(btn => {
+            btn.addEventListener('click', () => {
+              state.settings.accent = btn.getAttribute('data-set-acc');
+              saveOS();
+              applySettings();
+              renderWindows();
+            });
+          });
+          const slider = document.getElementById('cs-opacity-slider');
+          if (slider) {
+            slider.addEventListener('input', (e) => {
+              state.settings.glassOpacity = Number(e.target.value);
+              saveOS();
+              applySettings();
+            });
+          }
+          const topCb = document.getElementById('cs-top-bar');
+          if (topCb) {
+            topCb.addEventListener('change', (e) => {
+              state.settings.topTaskbar = e.target.checked;
+              saveOS();
+              applySettings();
+            });
+          }
+          const resetBtn = document.getElementById('cs-reset-all');
+          if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+              localStorage.removeItem(PREFIX + 'state');
+              location.reload();
+            });
+          }
+        }
+      }
+
+      // --- Popover Menus (Start Menu & System Tray) ---
+      function closePopovers() {
+        state.startOpen = false;
+        state.trayOpen = false;
+        document.getElementById('start-menu').classList.add('hidden');
+        document.getElementById('start-menu').classList.remove('flex');
+        document.getElementById('tray-popup').classList.add('hidden');
+      }
+
+      function toggleStartMenu() {
+        const next = !state.startOpen;
+        closePopovers();
+        state.startOpen = next;
+        const menu = document.getElementById('start-menu');
+        if (next) {
+          menu.classList.remove('hidden');
+          menu.classList.add('flex');
+          const inp = document.getElementById('start-search-input');
+          inp.value = '';
+          renderStartMenuGrid('');
+          inp.focus();
+        }
+      }
+
+      function toggleTrayPopup() {
+        const next = !state.trayOpen;
+        closePopovers();
+        state.trayOpen = next;
+        const popup = document.getElementById('tray-popup');
+        if (next) {
+          let bytes = 0;
+          for (let k in localStorage) {
+            if (k.startsWith(PREFIX)) bytes += localStorage[k].length * 2;
+          }
+          document.getElementById('tray-ls-size').textContent = (bytes / 1024).toFixed(1) + ' KB';
+          popup.classList.remove('hidden');
+        }
+      }
+
+      // --- Escape Helper ---
+      function esc(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // --- Bind Global Desktop Events ---
+      function bindGlobalEvents() {
+        document.getElementById('desktop-area').addEventListener('click', () => {
+          state.selectedDesktopIcon = null;
+          renderDesktopIcons();
+          closePopovers();
+          lucide.createIcons();
+        });
+
+        document.getElementById('btn-start-menu').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleStartMenu();
+        });
+
+        document.getElementById('start-menu').addEventListener('click', (e) => e.stopPropagation());
+        document.getElementById('start-search-input').addEventListener('input', (e) => {
+          renderStartMenuGrid(e.target.value);
+        });
+
+        document.getElementById('btn-start-settings').addEventListener('click', () => launchApp('settings'));
+        document.getElementById('btn-start-lock').addEventListener('click', () => {
+          closePopovers();
+          document.getElementById('lock-screen').classList.remove('hidden');
+        });
+        document.getElementById('btn-unlock').addEventListener('click', () => {
+          document.getElementById('lock-screen').classList.add('hidden');
+          notify('Welcome back to ColtOS, Muir Student!');
+        });
+
+        document.getElementById('btn-tray-toggle').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleTrayPopup();
+        });
+        document.getElementById('tray-popup').addEventListener('click', (e) => e.stopPropagation());
+
+        document.getElementById('tray-btn-focus').addEventListener('click', () => {
+          state.settings.focusMode = !state.settings.focusMode;
+          saveOS();
+          applySettings();
+          lucide.createIcons();
+        });
+
+        document.querySelectorAll('[data-wp]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.settings.wallpaper = btn.getAttribute('data-wp');
+            saveOS();
+            applySettings();
+            notify('Wallpaper updated');
+          });
+        });
+      }
+
+      // --- Boot ColtOS ---
+      loadOS();
+      applySettings();
+      bindGlobalEvents();
+      renderDesktopIcons();
+      renderDock();
+      updateClocks();
+      setInterval(updateClocks, 15000);
+      lucide.createIcons();
+    })();
+  </script>
+</body>
+</html>
